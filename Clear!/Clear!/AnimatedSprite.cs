@@ -5,7 +5,7 @@ using System.Text;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 
-namespace Clear!
+namespace Clear_
 {
     class AnimatedSprite
     {
@@ -14,6 +14,8 @@ namespace Clear!
         public int Columns { get; set; }
         private int currentFrame;
         private int totalFrames;
+        private int delay;
+        private int counter;
         //Declarar primeiro a animated sprite com esta função (imagem,linhas,colunas)
         public AnimatedSprite(Texture2D texture, int rows, int columns)
         {
@@ -22,15 +24,36 @@ namespace Clear!
             Columns = columns;
             currentFrame = 0;
             totalFrames = Rows * Columns;
+            delay = 3;
+            counter = 0;
         }
 
         public void Update()
         {
-            currentFrame++;
-            if (currentFrame == totalFrames)
-                currentFrame = 0;
+            if (counter == delay)
+            {
+                counter = 0;
+                currentFrame++;
+                if (currentFrame == totalFrames)
+                    currentFrame = 0;
+            }
+            counter++;
         }
         //Usar esta função para desenhar (spriteBatch, coordenadas)
+        public void Draw(SpriteBatch spriteBatch, Vector2 location,float rotation)
+        {
+            int width = Texture.Width / Columns;
+            int height = Texture.Height / Rows;
+            int row = (int)((float)currentFrame / (float)Columns);
+            int column = currentFrame % Columns;
+
+            Rectangle sourceRectangle = new Rectangle(width * column, height * row, width, height);
+            Rectangle destinationRectangle = new Rectangle((int)location.X, (int)location.Y, width, height);
+
+            //spriteBatch.Begin();
+            spriteBatch.Draw(Texture, destinationRectangle, sourceRectangle, Color.White,rotation,new Vector2(10,10),SpriteEffects.None,1);
+            //spriteBatch.End();
+        }
         public void Draw(SpriteBatch spriteBatch, Vector2 location)
         {
             int width = Texture.Width / Columns;
