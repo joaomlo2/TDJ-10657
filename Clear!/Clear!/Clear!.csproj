@@ -58,6 +58,9 @@
     <Content Include="Icon.ico" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Content\BF4 1911.xnb">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="Content\test.xnb">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

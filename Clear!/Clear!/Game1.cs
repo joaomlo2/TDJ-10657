@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Storage;
 using Microsoft.Xna.Framework.GamerServices;
+using Microsoft.Xna.Framework.Audio;
 #endregion
 
 namespace Clear_
@@ -22,9 +23,11 @@ namespace Clear_
         Texture2D mira;
         AnimatedSprite Hero_Unholstered;
         Actor Hero;
+        SoundEffect pistol;
         MouseState rato;
         SpriteFont test;
         Vector2 PosRato,direction;
+        int pistol_counter=0;
         float rotation;
         public Game1()
             : base()
@@ -59,6 +62,7 @@ namespace Clear_
             test = Content.Load<SpriteFont>("test");
             Hero_Unholstered = new AnimatedSprite(hero_walking_unholstered_sheet,4,5);
             Hero = new Actor();
+            pistol = Content.Load<SoundEffect>("BF4 1911");
             rato = Mouse.GetState();
             // TODO: use this.Content to load your game content here
         }
@@ -85,7 +89,16 @@ namespace Clear_
             
             direction = PosRato - new Vector2(Hero.X, Hero.Y);
             direction.Normalize();
-
+            if(rato.LeftButton == ButtonState.Pressed)
+            {
+                if (pistol_counter == 0)
+                {
+                    pistol.Play();
+                    pistol_counter = 1;
+                }
+            }
+            if (rato.LeftButton == ButtonState.Released)
+                pistol_counter = 0;
             rotation = (float)Math.Atan2((double)direction.Y, (double)direction.X);
             
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
@@ -94,21 +107,31 @@ namespace Clear_
             {
                 Hero_Unholstered.Update();
                 Hero.Y--;
+                if (Keyboard.GetState().IsKeyDown(Keys.LeftShift))
+                    Hero.Y--;
             }
             if(Keyboard.GetState().IsKeyDown(Keys.S))
             {
                 Hero_Unholstered.Update();
                 Hero.Y++;
+                if (Keyboard.GetState().IsKeyDown(Keys.LeftShift))
+                    Hero.Y++;
             }
             if(Keyboard.GetState().IsKeyDown(Keys.A))
             {
                 Hero_Unholstered.Update();
                 Hero.X--;
+
+                if (Keyboard.GetState().IsKeyDown(Keys.LeftShift))
+                    Hero.X--;
             }
             if(Keyboard.GetState().IsKeyDown(Keys.D))
             {
                 Hero_Unholstered.Update();
                 Hero.X++;
+
+                if (Keyboard.GetState().IsKeyDown(Keys.LeftShift))
+                    Hero.X++;
             }
             // TODO: Add your update logic here
             base.Update(gameTime);
