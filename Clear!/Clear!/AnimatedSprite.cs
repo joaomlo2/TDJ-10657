@@ -16,7 +16,6 @@ namespace Clear_
         private int totalFrames;
         private int delay;
         private int counter;
-        //Declarar primeiro a animated sprite com esta função (imagem,linhas,colunas)
         public AnimatedSprite(Texture2D texture, int rows, int columns)
         {
             Texture = texture;
@@ -38,6 +37,18 @@ namespace Clear_
                     currentFrame = 0;
             }
             counter++;
+        }
+
+        public void Inv_Update()
+        {
+            if (counter == delay)
+            {
+                counter = 0;
+                currentFrame--;
+                if (currentFrame == totalFrames)
+                    currentFrame = 0;
+            }
+            counter--;
         }
         //Usar esta função para desenhar (spriteBatch, coordenadas)
         public void Draw(SpriteBatch spriteBatch, Vector2 location,float rotation)
