@@ -19,20 +19,23 @@ namespace Clear_
     {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
-        Texture2D hero_walking_unholstered_sheet;
-        Texture2D mira;
-        AnimatedSprite Hero_Unholstered;
+        Texture2D mira,t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12,t13,t14,t15,t16,t17,t18,t19;
+        AnimatedSprite Hero_Sprite;
         Actor Hero;
-        SoundEffect pistol;
-        MouseState rato;
+        SoundEffect pistol, armed;
+        MouseState Rato;
         SpriteFont test;
         Vector2 PosRato,direction;
-        int pistol_counter=0;
+        Level level;
+        int pistol_counter=0,armed_counter=0;
         float rotation;
         public Game1()
             : base()
         {
             graphics = new GraphicsDeviceManager(this);
+            graphics.PreferredBackBufferWidth = 800;
+            graphics.PreferredBackBufferHeight = 600;
+            graphics.IsFullScreen = true;
             Content.RootDirectory = "Content";
         }
 
@@ -57,13 +60,33 @@ namespace Clear_
         {
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
-            hero_walking_unholstered_sheet = Content.Load<Texture2D>("hero_walking_normal");
             mira = Content.Load<Texture2D>("mira");
             test = Content.Load<SpriteFont>("test");
-            Hero_Unholstered = new AnimatedSprite(hero_walking_unholstered_sheet,4,5);
+            Hero_Sprite = new AnimatedSprite(Content.Load<Texture2D>("hero_walking_normal"),4,5);
             Hero = new Actor();
             pistol = Content.Load<SoundEffect>("BF4 1911");
-            rato = Mouse.GetState();
+            t1 = Content.Load<Texture2D>("1");
+            t2 = Content.Load<Texture2D>("2");
+            t3 = Content.Load<Texture2D>("3");
+            t4 = Content.Load<Texture2D>("4");
+            t5 = Content.Load<Texture2D>("5");
+            t6 = Content.Load<Texture2D>("6");
+            t7 = Content.Load<Texture2D>("7");
+            t8 = Content.Load<Texture2D>("8");
+            t9 = Content.Load<Texture2D>("9");
+            t10 = Content.Load<Texture2D>("10");
+            t11 = Content.Load<Texture2D>("11");
+            t12 = Content.Load<Texture2D>("12");
+            t13 = Content.Load<Texture2D>("13");
+            t14 = Content.Load<Texture2D>("14");
+            t15 = Content.Load<Texture2D>("15");
+            t16 = Content.Load<Texture2D>("16");
+            t17 = Content.Load<Texture2D>("17");
+            t18 = Content.Load<Texture2D>("18");
+            t19 = Content.Load<Texture2D>("19");
+            armed = Content.Load<SoundEffect>("Arming");
+            Rato = Mouse.GetState();
+            level = new Level();
             // TODO: use this.Content to load your game content here
         }
 
@@ -83,55 +106,71 @@ namespace Clear_
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
-
-            rato = Mouse.GetState();
-            PosRato = new Vector2(rato.X, rato.Y);
-            
+            Rato = Mouse.GetState();
+            PosRato = new Vector2(Rato.X, Rato.Y);
             direction = PosRato - new Vector2(Hero.X, Hero.Y);
             direction.Normalize();
-            if(rato.LeftButton == ButtonState.Pressed)
-            {
-                if (pistol_counter == 0)
-                {
-                    pistol.Play();
-                    pistol_counter = 1;
-                }
-            }
-            if (rato.LeftButton == ButtonState.Released)
-                pistol_counter = 0;
             rotation = (float)Math.Atan2((double)direction.Y, (double)direction.X);
             
+            if(Hero.Armed==true)
+            {
+                Hero_Sprite.Texture = Content.Load<Texture2D>("hero_walking_armed");
+            }
+            else
+            {
+                Hero_Sprite.Texture = Content.Load<Texture2D>("hero_walking_normal");
+            }
+            
+            if(Rato.RightButton==ButtonState.Pressed)
+            {
+                if (Hero.Armed == true)
+                {
+                    Hero.Armed = false;
+                }
+                else
+                {
+                    Hero.Armed = true;
+                }
+            }
+            if (Rato.RightButton == ButtonState.Released)
+            {
+                armed_counter = 0;
+            }
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
             if(Keyboard.GetState().IsKeyDown(Keys.W))
             {
-                Hero_Unholstered.Update();
+               
+                Hero_Sprite.Update();
                 Hero.Y--;
-                if (Keyboard.GetState().IsKeyDown(Keys.LeftShift))
+                if (Keyboard.GetState().IsKeyDown(Keys.LeftShift)&&Hero.Armed==false)
                     Hero.Y--;
             }
             if(Keyboard.GetState().IsKeyDown(Keys.S))
             {
-                Hero_Unholstered.Update();
+                Hero_Sprite.Update();
                 Hero.Y++;
-                if (Keyboard.GetState().IsKeyDown(Keys.LeftShift))
+                if (Keyboard.GetState().IsKeyDown(Keys.LeftShift) && Hero.Armed == false)
                     Hero.Y++;
             }
             if(Keyboard.GetState().IsKeyDown(Keys.A))
             {
-                Hero_Unholstered.Update();
+                Hero_Sprite.Update();
                 Hero.X--;
-
-                if (Keyboard.GetState().IsKeyDown(Keys.LeftShift))
+                if (Keyboard.GetState().IsKeyDown(Keys.LeftShift) && Hero.Armed == false)
                     Hero.X--;
             }
             if(Keyboard.GetState().IsKeyDown(Keys.D))
             {
-                Hero_Unholstered.Update();
+                
+                Hero_Sprite.Update();
                 Hero.X++;
-
-                if (Keyboard.GetState().IsKeyDown(Keys.LeftShift))
+                if (Keyboard.GetState().IsKeyDown(Keys.LeftShift) && Hero.Armed == false)
                     Hero.X++;
+            }
+            if(Keyboard.GetState().IsKeyDown(Keys.R))
+            {
+                level = new Level();
             }
             // TODO: Add your update logic here
             base.Update(gameTime);
@@ -145,10 +184,53 @@ namespace Clear_
         {
             GraphicsDevice.Clear(Color.Gray);
             spriteBatch.Begin();
-            Hero_Unholstered.Draw(spriteBatch,new Vector2(Hero.X,Hero.Y),rotation);
+            for (int i = 0; i < 12; i++)
+            {
+                for (int j = 0; j < 16; j++)
+                {
+                    if (level.map[i, j] == 1)
+                        spriteBatch.Draw(t1, new Vector2(j * 50, i * 50), Color.White);
+                    if (level.map[i, j] == 2)
+                        spriteBatch.Draw(t2, new Vector2(j * 50, i * 50), Color.White);
+                    if (level.map[i, j] == 3)
+                        spriteBatch.Draw(t3, new Vector2(j * 50, i * 50), Color.White);
+                    if (level.map[i, j] == 4)
+                        spriteBatch.Draw(t4, new Vector2(j * 50, i * 50), Color.White);
+                    if (level.map[i, j] == 5)
+                        spriteBatch.Draw(t5, new Vector2(j * 50, i * 50), Color.White);
+                    if (level.map[i, j] == 6)
+                        spriteBatch.Draw(t6, new Vector2(j * 50, i * 50), Color.White);
+                    if (level.map[i, j] == 7)
+                        spriteBatch.Draw(t7, new Vector2(j * 50, i * 50), Color.White);
+                    if (level.map[i, j] == 8)
+                        spriteBatch.Draw(t8, new Vector2(j * 50, i * 50), Color.White);
+                    if (level.map[i, j] == 9)
+                        spriteBatch.Draw(t9, new Vector2(j * 50, i * 50), Color.White);
+                    if (level.map[i, j] == 10)
+                        spriteBatch.Draw(t10, new Vector2(j * 50, i * 50), Color.White);
+                    if (level.map[i, j] == 11)
+                        spriteBatch.Draw(t11, new Vector2(j * 50, i * 50), Color.White);
+                    if (level.map[i, j] == 12)
+                        spriteBatch.Draw(t12, new Vector2(j * 50, i * 50), Color.White);
+                    if (level.map[i, j] == 13)
+                        spriteBatch.Draw(t13, new Vector2(j * 50, i * 50), Color.White);
+                    if (level.map[i, j] == 14)
+                        spriteBatch.Draw(t14, new Vector2(j * 50, i * 50), Color.White);
+                    if (level.map[i, j] == 15)
+                        spriteBatch.Draw(t15, new Vector2(j * 50, i * 50), Color.White);
+                    if (level.map[i, j] == 16)
+                        spriteBatch.Draw(t16, new Vector2(j * 50, i * 50), Color.White);
+                    if (level.map[i, j] == 17)
+                        spriteBatch.Draw(t17, new Vector2(j * 50, i * 50), Color.White);
+                    if (level.map[i, j] == 18)
+                        spriteBatch.Draw(t18, new Vector2(j * 50, i * 50), Color.White);
+                    if (level.map[i, j] == 19)
+                        spriteBatch.Draw(t19, new Vector2(j * 50, i * 50), Color.White);
+                }
+            }
+            Hero_Sprite.Draw(spriteBatch, new Vector2(Hero.X, Hero.Y), rotation);
             spriteBatch.Draw(mira, PosRato);
-            spriteBatch.DrawString(test, rato.X.ToString(), new Vector2(100, 50), Color.Red);
-            spriteBatch.DrawString(test, rato.Y.ToString(), new Vector2(150, 50), Color.Red);
+            spriteBatch.DrawString(test,gameTime.TotalGameTime.Seconds.ToString(), new Vector2(100, 50), Color.Red);
             spriteBatch.End();
             // TODO: Add your drawing code here
 
