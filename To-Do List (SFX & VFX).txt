@@ -1,0 +1,3 @@
+1 - Scale-Down do modelo do heroi.
+2 - Corrigir Centro de desenho do sprite para modelo novo.
+3 - Adicionar sons novos para as várias armas e ações (disparo e reload).
