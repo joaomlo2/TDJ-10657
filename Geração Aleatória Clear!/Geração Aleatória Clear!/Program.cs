@@ -11,16 +11,18 @@ namespace Geração_Aleatória_Clear_
         static void Main(string[] args)
         {
             int[,] level = new int[5, 5];
+            List<int> RandomNumbers=new List<int>();
             for (int i=0;i<5;i++)
             {
-                List<int> RandomNumbers = new List<int>();
                 for(int j=0;j<5;j++)
                 {
                     int num;
                     do num=new Random().Next(0,41);
                     while(RandomNumbers.Contains(num));
-                        RandomNumbers.Add(num);
+
+                    RandomNumbers.Add(num);
                     level[i, j] = num;
+                    Console.Write(num+" ");
                 }
             }
             for (int i = 0; i < 5; i++)

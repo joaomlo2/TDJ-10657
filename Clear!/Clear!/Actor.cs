@@ -10,14 +10,12 @@ namespace Clear_
         public int X {get;set;}
         public int Y{get;set;}
         public float Angle { get; set; }
-        public bool Armed { get; set; }
 
         public Actor()
         {
-            X = 40;
-            Y = 40;
+            X = 10;
+            Y = 10;
             Angle = 90;
-            Armed = false;
         }
     }
 }
