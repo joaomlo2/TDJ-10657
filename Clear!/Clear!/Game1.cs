@@ -120,16 +120,31 @@ namespace Clear_
             {
                 Hero_Sprite.Texture = Content.Load<Texture2D>("hero_walking_normal");
             }
-            
-            if(Rato.RightButton==ButtonState.Pressed)
+            if(Rato.LeftButton==ButtonState.Pressed && Hero.Armed==true)
+            {
+                if(pistol_counter==0)
+                {
+                    pistol.Play();
+                    pistol_counter = 1;
+                }
+            }
+            if(Rato.LeftButton==ButtonState.Released)
+            {
+                pistol_counter = 0;
+            }
+            if(Rato.RightButton==ButtonState.Pressed && armed_counter==0)
             {
                 if (Hero.Armed == true)
                 {
                     Hero.Armed = false;
+                    armed.Play();
+                    armed_counter = 1;
                 }
                 else
                 {
                     Hero.Armed = true;
+                    armed.Play();
+                    armed_counter = 1;
                 }
             }
             if (Rato.RightButton == ButtonState.Released)
