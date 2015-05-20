@@ -17,26 +17,44 @@ namespace Mess_Around_2_Roguesharp
     {
         public float X { get; set; }
         public float Y { get; set; }
-        public float mira_X { get; set; }
-        public float mira_Y { get; set; }
+        public Vector2 mira { get; set; }
         public int sqX { get; set; }
         public int sqY { get; set; }
-        public float Scale { get; set; }
         public Texture2D Sprite { get; set; }
         public Texture2D Sprite_Mira { get; set; }
         public float Rotation { get; set; }
         
+        public Jogador()
+        {
+            Rotation = 0.0f;
+        }
+
         public void Draw(SpriteBatch spriteBatch)
         {
-            float multiplier = Scale * Sprite.Width;
-            Rotation = 0.0f;
-            spriteBatch.Draw(Sprite, new Vector2(X * multiplier, Y * multiplier),null, null, null, Rotation, new Vector2(Scale, Scale),Color.White, SpriteEffects.None, 0.5f);
+            spriteBatch.Draw(Sprite, new Vector2(X * Sprite.Width, Y * Sprite.Height), null, null, new Vector2(32,32),Rotation, Vector2.One, Color.White, SpriteEffects.None, LayerDepth.Figures);
+        }
+
+        public void Actualizar_Rotação()
+        {
+            Vector2 dir=new Vector2();
+            dir = Global.camera.ScreenToWorld( mira) - new Vector2(X * Sprite.Width, Y * Sprite.Height);
+            dir.Normalize();
+            Rotation = (float)Math.Atan2((double)dir.Y, (double)dir.X);
+        }
+
+        public void Actualizar_Posição_na_Grelha(float X,float Y)
+        {
+            this.sqX = (int)(this.X);
+            this.sqY = (int)(this.Y);
         }
 
         public void Draw_Mira(SpriteBatch s)
         {
-            float multiplier = Scale * Sprite.Width;
-            s.Draw(Sprite_Mira, new Vector2(mira_X * multiplier, mira_Y * multiplier), null, null, null, 0.0f, new Vector2(Scale, Scale), Color.White, SpriteEffects.None, 0.5f);
+            s.End();
+            SpriteBatch ns=new SpriteBatch(s.GraphicsDevice);
+            ns.Begin();
+            ns.Draw(Sprite_Mira, new Vector2(mira.X,mira.Y), null, null, null, 0.0f, new Vector2(1,1), Color.White, SpriteEffects.None, LayerDepth.Figures);
+            ns.End();
         }
     }
 }

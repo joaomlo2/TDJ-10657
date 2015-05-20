@@ -41,13 +41,14 @@ namespace Mess_Around_2_Roguesharp
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
-            IMapCreationStrategy<Map> mapCreationStrategy = new RandomRoomsMapCreationStrategy<Map>(50, 30, 100, 7, 3);
+            IMapCreationStrategy<Map> mapCreationStrategy = new RandomRoomsMapCreationStrategy<Map>(Global.MapWidth, Global.MapHeight, 100, 7, 3);
             map = Map.Create(mapCreationStrategy);
+            Global.camera.ViewportWidth = graphics.GraphicsDevice.Viewport.Width;
+            Global.camera.ViewportHeight = graphics.GraphicsDevice.Viewport.Height;
             jogador = new Jogador();
             Cell rndpos = GetRandomEmptyCell();
             jogador.X = rndpos.X;
             jogador.Y = rndpos.Y;
-            jogador.Scale = 0.25f;
             m = Mouse.GetState();
             base.Initialize();
         }
@@ -64,6 +65,7 @@ namespace Mess_Around_2_Roguesharp
             wall = Content.Load<Texture2D>("Wall");
             mira = Content.Load<Texture2D>("mira");
             jogador.Sprite = Content.Load<Texture2D>("actor");
+            jogador.Sprite_Mira = Content.Load<Texture2D>("mira");
             // TODO: use this.Content to load your game content here
         }
 
@@ -85,39 +87,43 @@ namespace Mess_Around_2_Roguesharp
         {
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
-            if(Keyboard.GetState().IsKeyDown(Keys.W))
+            else
             {
-                jogador.Y-=0.05f;
-            }
-            if(Keyboard.GetState().IsKeyDown(Keys.S))
-            {
-                jogador.Y+=0.05f;
-            }
-            if(Keyboard.GetState().IsKeyDown(Keys.A))
-            {
-                jogador.X-=0.05f;
-            }
-            if(Keyboard.GetState().IsKeyDown(Keys.D))
-            {
-                jogador.X+=0.05f;
-            }
-            if(Keyboard.GetState().IsKeyDown(Keys.R))
-            {
-                IMapCreationStrategy<Map> mapCreationStrategy = new RandomRoomsMapCreationStrategy<Map>(50, 30, 100, 7, 3);
-                map = Map.Create(mapCreationStrategy);
-
-                Cell rndpos = GetRandomEmptyCell();
-                jogador.X = rndpos.X;
-                jogador.Y = rndpos.Y;
+                if (Keyboard.GetState().IsKeyDown(Keys.R))
+                {
+                    IMapCreationStrategy<Map> mapCreationStrategy = new RandomRoomsMapCreationStrategy<Map>(Global.MapWidth, Global.MapHeight, 100, 7, 3);
+                    map = Map.Create(mapCreationStrategy);
+                    Cell rndpos = GetRandomEmptyCell();
+                    jogador.X = rndpos.X;
+                    jogador.Y = rndpos.Y;
+                }
+                else
+                {
+                    if (Keyboard.GetState().IsKeyDown(Keys.A))
+                    {
+                        jogador.X -= 0.05f;
+                    }
+                    if (Keyboard.GetState().IsKeyDown(Keys.D))
+                    {
+                        jogador.X += 0.05f;
+                    }
+                    if (Keyboard.GetState().IsKeyDown(Keys.W))
+                    {
+                        jogador.Y -= 0.05f;
+                    }
+                    if (Keyboard.GetState().IsKeyDown(Keys.S))
+                    {
+                        jogador.Y += 0.05f;
+                    }
+                }
             }
             // TODO: Add your update logic here
+            jogador.Actualizar_Posição_na_Grelha(jogador.X,jogador.Y);
             m = Mouse.GetState();
             Vector2 PosRato = new Vector2(m.X, m.Y);
-            jogador.mira_X = m.X;
-            jogador.mira_Y = m.Y;
-            Vector2 Direcção = PosRato - new Vector2(jogador.X, jogador.Y);
-            Direcção.Normalize();
-            jogador.Rotation = (float)Math.Atan2((double)Direcção.Y, (double)Direcção.X);
+            jogador.mira = PosRato;
+            jogador.Actualizar_Rotação();
+            Global.camera.CenterOn(new Vector2(jogador.X*64,jogador.Y*64));
             base.Update(gameTime);
         }
 
@@ -130,31 +136,31 @@ namespace Mess_Around_2_Roguesharp
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
             // TODO: Add your drawing code here
-            spriteBatch.Begin(SpriteSortMode.BackToFront, BlendState.AlphaBlend);
-            jogador.Draw_Mira(spriteBatch);
-            int sizeOfSprites = 64;
-            float scale = .25f;
+            spriteBatch.Begin(SpriteSortMode.BackToFront, BlendState.AlphaBlend,null, null, null, null, Global.camera.TranslationMatrix);
+            //jogador.Draw_Mira(spriteBatch);
+            int sizeOfSprites = Global.SpriteWidth;
             foreach (Cell cell in map.GetAllCells())
             {
-                var position = new Vector2(cell.X * sizeOfSprites * scale, cell.Y * sizeOfSprites * scale);
+                var position = new Vector2(cell.X * sizeOfSprites, cell.Y * sizeOfSprites);
                 if (cell.IsWalkable)
                 {
                     spriteBatch.Draw(floor, position,
-                      null, null, null, 0.0f, new Vector2(scale, scale),
-                      Color.White, SpriteEffects.None, 0.8f);
+                      null, null, null, 0.0f, null,
+                      Color.White, SpriteEffects.None, LayerDepth.Cells);
                 }
                 else
                 {
                     spriteBatch.Draw(wall, position,
-                       null, null, null, 0.0f, new Vector2(scale, scale),
-                       Color.White, SpriteEffects.None, 0.8f);
+                       null, null, null, 0.0f, null,
+                       Color.White, SpriteEffects.None, LayerDepth.Cells);
                 }
             }
             jogador.Draw(spriteBatch);
+            jogador.Draw_Mira(spriteBatch);
             spriteBatch.End();
             base.Draw(gameTime);
         }
-
+        
         private Cell GetRandomEmptyCell()
         {
             IRandom random = new DotNetRandom();
@@ -167,6 +173,82 @@ namespace Mess_Around_2_Roguesharp
                 {
                     return map.GetCell(x, y);
                 }
+            }
+        }
+
+        private bool CanGo_UP(int sqX,int sqY,float y)
+        {
+            if(!map.GetCell(sqX,(sqY-1)).IsWalkable)
+            {
+                if((y)-sqY<=0)
+                {
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+        private bool CanGo_DOWN(int sqX, int sqY, float y)
+        {
+            if (!map.GetCell(sqX, (sqY + 1)).IsWalkable)
+            {
+                if ((y) - sqY >= 64)
+                {
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+        private bool CanGo_LEFT(int sqX,int sqY, float x)
+        {
+            if (!map.GetCell((sqX-1), sqY - 1).IsWalkable)
+            {
+                if ((x) - sqX <= 0)
+                {
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+        private bool CanGo_RIGHT(int sqX, int sqY, float x)
+        {
+            if (!map.GetCell((sqX + 1), sqY - 1).IsWalkable)
+            {
+                if ((x) - sqX >= 64)
+                {
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+            else
+            {
+                return true;
             }
         }
     }
