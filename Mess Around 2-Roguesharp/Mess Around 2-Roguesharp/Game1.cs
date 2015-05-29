@@ -9,6 +9,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Storage;
 using Microsoft.Xna.Framework.GamerServices;
+using Microsoft.Xna.Framework.Audio;
 #endregion
 
 namespace Mess_Around_2_Roguesharp
@@ -21,9 +22,13 @@ namespace Mess_Around_2_Roguesharp
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
         MouseState m;
-        Texture2D floor, wall,mira;
+        Texture2D floor, wall, mira, bala;
         Jogador jogador;
+        SoundEffect shot;
         IMap map;
+        Vector2 speed = new Vector2(0.5f, 0.5f);
+
+
 
         public Game1()
             : base()
@@ -60,10 +65,12 @@ namespace Mess_Around_2_Roguesharp
         protected override void LoadContent()
         {
             // Create a new SpriteBatch, which can be used to draw textures.
+            shot = Content.Load<SoundEffect>("shot");
             spriteBatch = new SpriteBatch(GraphicsDevice);
             floor = Content.Load<Texture2D>("Floor");
             wall = Content.Load<Texture2D>("Wall");
             mira = Content.Load<Texture2D>("mira");
+            bala = Content.Load<Texture2D>("bullet");
             jogador.Sprite = Content.Load<Texture2D>("actor");
             jogador.Sprite_Mira = Content.Load<Texture2D>("mira");
             // TODO: use this.Content to load your game content here
@@ -116,15 +123,18 @@ namespace Mess_Around_2_Roguesharp
                         jogador.Y += 0.05f;
                     }
                 }
+                m = Mouse.GetState();
+                    if(m.LeftButton==ButtonState.Pressed)
+                    {
+                        shot.Play();                        
+                    }
+                jogador.Actualizar_Posição_na_Grelha(jogador.X, jogador.Y);
+                Vector2 PosRato = new Vector2(m.X, m.Y);
+                jogador.aim = PosRato;
+                jogador.Actualizar_Rotação();
+                Global.camera.CenterOn(new Vector2(jogador.X * 64, jogador.Y * 64));
+                base.Update(gameTime);
             }
-            // TODO: Add your update logic here
-            jogador.Actualizar_Posição_na_Grelha(jogador.X,jogador.Y);
-            m = Mouse.GetState();
-            Vector2 PosRato = new Vector2(m.X, m.Y);
-            jogador.mira = PosRato;
-            jogador.Actualizar_Rotação();
-            Global.camera.CenterOn(new Vector2(jogador.X*64,jogador.Y*64));
-            base.Update(gameTime);
         }
 
         /// <summary>
