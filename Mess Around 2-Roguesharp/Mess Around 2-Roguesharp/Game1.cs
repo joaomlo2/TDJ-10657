@@ -204,10 +204,6 @@ namespace Mess_Around_2_Roguesharp
                     }
                     jogador.Actualizar_Rotação();
 
-                    //Console.Write("Jogador:{0} {1}\nInimigo:{2} {3} {4}\n",jogador.sqX,jogador.sqY,(int)en1.X,(int)en1.Y,en1.IsAgressive);
-
-                    Console.Write("{0}\n", jogador.morreu);
-
                     new_pos = new Vector2(jogador.sqX, jogador.sqY);
                     Cell jog = map.GetCell(jogador.sqX, jogador.sqY);
                     if (enemy_move_delay == 15)
@@ -295,7 +291,9 @@ namespace Mess_Around_2_Roguesharp
             else
             {
                 spriteBatch.Begin();
-                spriteBatch.DrawString(font,"PERDEU",new Vector2(350,200),Color.Red);
+                spriteBatch.DrawString(font, "PERDEU", new Vector2(350, 200), Color.Red);
+                spriteBatch.DrawString(font, "PONTOS:", new Vector2(290, 220), Color.Red);
+                spriteBatch.DrawString(font, jogador.Pontos.ToString(), new Vector2(425, 220), Color.White);
                 spriteBatch.End();
             }
         }
