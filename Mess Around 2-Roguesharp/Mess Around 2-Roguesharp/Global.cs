@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using RogueSharp;
+using RogueSharp.Random;
 
 namespace Mess_Around_2_Roguesharp
 {
@@ -11,6 +13,7 @@ namespace Mess_Around_2_Roguesharp
         public static readonly int MapHeight = 30;
         public static readonly int SpriteWidth = 64;
         public static readonly int SpriteHeight = 64;
+        public static readonly IRandom Random = new DotNetRandom();
         public static readonly Camera2 camera = new Camera2();
     }
 }

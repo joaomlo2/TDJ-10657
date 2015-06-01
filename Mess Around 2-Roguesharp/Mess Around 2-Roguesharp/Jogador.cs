@@ -13,101 +13,39 @@ using Microsoft.Xna.Framework.GamerServices;
 
 namespace Mess_Around_2_Roguesharp
 {
-    class Jogador : Sprite
+    public class Jogador
     {
         public float X { get; set; }
         public float Y { get; set; }
-        public Vector2 aim { get; set; }
+        public Vector2 mira { get; set; }
+        public bool morreu { get; set; }
         public int sqX { get; set; }
         public int sqY { get; set; }
-        public Texture2D Sprite { get; set; }
+        public int Pontos { get; set; }
+        public Sprite sprt { get; set; }
         public Texture2D Sprite_Mira { get; set; }
         public float Rotation { get; set; }
-        List<Bullet> mbullets = new List<Bullet>();
-        ContentManager mContentManager;
-
-        Vector2 mDirection = new Vector2(Mouse.GetState().X, Mouse.GetState().Y);
-        Vector2 mSpeed = new Vector2(0.5f, 0.5f);
-
-        public void LoadContent(ContentManager theContentManager)
-        {
-            mContentManager = theContentManager;
-
-            foreach (Bullet aBullet in mbullets)
-            {
-                aBullet.LoadContent(theContentManager);
-            }
-            
-            Vector2 Position = new Vector2(X, Y);
-            Vector2 Source = new Vector2(Mouse.GetState().X, Mouse.GetState().Y);
-
-        }
-
-        private void UpdateBullets(GameTime gameTime)
-        {
-            foreach (Bullet aBullet in mbullets)
-            {
-                aBullet.Update(gameTime);
-            }
-
-            if (Mouse.GetState().LeftButton == ButtonState.Pressed)
-            {
-                Shoot();
-            }
-        }
-
-        private void Shoot()
-        {
-            if (Mouse.GetState().LeftButton == ButtonState.Pressed)
-            {
-                bool aCreateNew = true;
-                foreach (Bullet aBullet in mbullets)
-                {
-                    if (aBullet.Visible == false)
-                    {
-                        aCreateNew = false;
-                        aBullet.Fire(Position + new Vector2(Size.Width / 2, Size.Height / 2),
-                            new Vector2(1, 0), new Vector2(1, 0));
-                        break;
-                    }
-                }
-
-                if (aCreateNew == true)
-                {
-                    Bullet aBullet = new Bullet();
-                    aBullet.LoadContent(mContentManager);
-                    aBullet.Fire(Position + new Vector2(Size.Width / 2, Size.Height / 2),
-                        new Vector2(1, 1), new Vector2(1, 0));
-                    mbullets.Add(aBullet);
-                }
-            }
-        }
-
-        public void Update(GameTime gameTime)
-        {
-            UpdateBullets(gameTime);
-        }
-
-        public Jogador()
+        private Camera2 camera;
+        
+        public Jogador(Camera2 c)
         {
             Rotation = 0.0f;
+            camera = c;
+            Pontos = 0;
+            morreu = false;
         }
 
-        public void Draw(SpriteBatch spriteBatch)
+        public void Actualizar_Pos_Sprite()
         {
-            foreach (Bullet aBullet in mbullets)
-            {
-                aBullet.Draw(spriteBatch);
-            }
-            spriteBatch.Draw(Sprite, new Vector2(X * Sprite.Width, Y * Sprite.Height), null, null, new Vector2(32,32),Rotation, Vector2.One, Color.White, SpriteEffects.None, LayerDepth.Figures);
+            sprt.SetPosition(new Vector2(this.X,this.Y));
         }
 
         public void Actualizar_Rotação()
         {
             Vector2 dir=new Vector2();
-            dir = Global.camera.ScreenToWorld( aim) - new Vector2(X * Sprite.Width, Y * Sprite.Height);
+            dir = Global.camera.ScreenToWorld( mira) - new Vector2(X * sprt.image.Width, Y * sprt.image.Height);
             dir.Normalize();
-            Rotation = (float)Math.Atan2((double)dir.Y, (double)dir.X);
+            sprt.SetRotation((float)Math.Atan2((double)dir.Y, (double)dir.X));
         }
 
         public void Actualizar_Posição_na_Grelha(float X,float Y)
@@ -116,13 +54,26 @@ namespace Mess_Around_2_Roguesharp
             this.sqY = (int)(this.Y);
         }
 
-        public void Draw_Mira(SpriteBatch s)
+        public void Disparo(Vector2 Rato,Enemy e)
+        {
+            if(Rato.X>e.X && Rato.Y>e.Y && Rato.X<=e.X+64 && Rato.X<=e.Y+64&&!e.IsDestroyed)
+            {
+                e.X = 0;
+                e.Y = 0;
+                e.IsDestroyed = true;
+                Pontos++;
+            }
+        }
+
+        public void Draw_Mira_e_Pontos(SpriteBatch s,ContentManager c,SpriteFont f)
         {
             s.End();
-            SpriteBatch ns=new SpriteBatch(s.GraphicsDevice);
-            ns.Begin();
-            ns.Draw(Sprite_Mira, new Vector2(aim.X,aim.Y), null, null, null, 0.0f, new Vector2(1,1), Color.White, SpriteEffects.None, LayerDepth.Figures);
-            ns.End();
+            s.Begin();
+            s.Draw(Sprite_Mira, new Vector2(mira.X,mira.Y), null, null, null, 0.0f, new Vector2(1,1), Color.White, SpriteEffects.None, LayerDepth.Figures);
+            s.DrawString(f,Pontos.ToString(),new Vector2(10,10),Color.Yellow);
+            s.End();
+            s.Begin(SpriteSortMode.BackToFront, BlendState.AlphaBlend, null, null, null, null, Global.camera.TranslationMatrix);
+            s.Draw(c.Load<Texture2D>("Floor"), new Vector2(mira.X, mira.Y) * 64, null, null, null, 0.0f, Vector2.One, Color.Blue * .2f, SpriteEffects.None, LayerDepth.Figures);
         }
     }
 }

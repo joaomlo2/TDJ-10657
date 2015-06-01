@@ -1,78 +1,175 @@
-﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Content;
-using Microsoft.Xna.Framework.Graphics;
+﻿#region Using Statements
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using RogueSharp;
+using RogueSharp.Random;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;
+using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Storage;
+using Microsoft.Xna.Framework.GamerServices;
+using Rectangle = Microsoft.Xna.Framework.Rectangle;
+#endregion
 
 namespace Mess_Around_2_Roguesharp
 {
-    class Sprite
+    public class Sprite
     {
-        //The current position of the Sprite
-        public Vector2 Position = new Vector2(0, 0);
+        public bool HasCollisions { protected set; get; }
 
-        //The texture object used when drawing the sprite
-        private Texture2D mSpriteTexture;
-
-        //The asset name for the Sprite's Texture
-        public string AssetName;
-
-        //The Size of the Sprite (with scale applied)
-        public Rectangle Size;
-
-        //The Rectangular area from the original image that 
-        //defines the Sprite. 
-        Rectangle mSource;
-        public Rectangle Source
+        public Texture2D image { get; set; }
+        protected Vector2 position;
+        protected float radius; // raio da "bounding box"
+        protected Vector2 size;
+        protected float rotation;
+        protected Vector2 pixelsize;
+        protected Rectangle? source = null;
+        protected Color[] pixels;
+        protected ContentManager cManager;
+        public Sprite(ContentManager contents, String assetName)
         {
-            get { return mSource; }
-            set
+            this.cManager = contents;
+            this.HasCollisions = false;
+            this.rotation = 0f;
+            this.position = Vector2.Zero;
+            this.image = contents.Load<Texture2D>(assetName);
+            this.pixelsize = new Vector2(image.Width, image.Height);
+            this.size = new Vector2(1f, (float)image.Height / (float)image.Width);
+        }
+
+        // Se houver colisao, collisionPoint é o ponto de colisão
+        // se não houver, collisionPoint deve ser ignorado!
+        public bool CollidesWith(Sprite other, out Vector2 collisionPoint)
+        {
+            collisionPoint = position; // Calar o compilador
+
+            if (!this.HasCollisions) return false;
+            if (!other.HasCollisions) return false;
+
+            float distance = (this.position - other.position).Length();
+
+            if (distance > this.radius + other.radius) return false;
+
+            return this.PixelTouches(other, out collisionPoint);
+        }
+
+        public virtual void EnableCollisions()
+        {
+            this.HasCollisions = true;
+            this.radius = (float)Math.Sqrt(Math.Pow(size.X / 2, 2) +
+                                             Math.Pow(size.Y / 2, 2));
+
+            pixels = new Color[(int)(pixelsize.X * pixelsize.Y)];
+            image.GetData<Color>(pixels);
+        }
+
+        public Color GetColorAt(int x, int y)
+        {
+            // Se nao houver collider, da erro!!!
+            return pixels[x + y * (int)pixelsize.X];
+        }
+
+        private Vector2 ImagePixelToVirtualWorld(int i, int j)
+        {
+            float x = i * size.X / (float)pixelsize.X;
+            float y = j * size.Y / (float)pixelsize.Y;
+            return new Vector2(position.X + x - (size.X * 0.5f),
+                               position.Y - y + (size.Y * 0.5f));
+        }
+
+        private Vector2 VirtualWorldPointToImagePixel(Vector2 p)
+        {
+            Vector2 delta = p - position;
+            float i = delta.X * pixelsize.X / size.X;
+            float j = delta.Y * pixelsize.Y / size.Y;
+
+            i += pixelsize.X * 0.5f;
+            j = pixelsize.Y * 0.5f - j;
+
+            return new Vector2(i, j);
+        }
+
+        public bool PixelTouches(Sprite other, out Vector2 collisionPoint)
+        {
+            // Se nao houver colisao, o ponto de colisao retornado e'
+            // a posicao da Sprite (podia ser outro valor qualquer)
+            collisionPoint = position;
+
+            bool touches = false;
+
+            int i = 0;
+            while (touches == false && i < pixelsize.X)
             {
-                mSource = value;
-                Size = new Rectangle(0, 0, (int)(mSource.Width * Scale), (int)(mSource.Height * Scale));
+                int j = 0;
+                while (touches == false && j < pixelsize.Y)
+                {
+                    if (GetColorAt(i, j).A > 0)
+                    {
+                        Vector2 CollidePoint = ImagePixelToVirtualWorld(i, j);
+                        Vector2 otherPixel = other.VirtualWorldPointToImagePixel(CollidePoint);
+
+                        if (otherPixel.X >= 0 && otherPixel.Y >= 0 &&
+                            otherPixel.X < other.pixelsize.X &&
+                            otherPixel.Y < other.pixelsize.Y)
+                        {
+                            if (other.GetColorAt((int)otherPixel.X, (int)otherPixel.Y).A > 0)
+                            {
+                                touches = true;
+                                collisionPoint = CollidePoint;
+                            }
+                        }
+
+                    }
+                    j++;
+                }
+                i++;
             }
+            return touches;
         }
 
-
-        //The amount to increase/decrease the size of the original sprite. 
-        private float mScale = 1.0f;
-
-        //When the scale is modified throught he property, the Size of the 
-        //sprite is recalculated with the new scale applied.
-        public float Scale
+        public virtual void Scale(float scale)
         {
-            get { return mScale; }
-            set
-            {
-                mScale = value;
-                //Recalculate the Size of the Sprite with the new scale
-                Size = new Rectangle(0, 0, (int)(Source.Width * Scale), (int)(Source.Height * Scale));
-            }
+            this.size *= scale;
         }
 
-        //Load the texture for the sprite using the Content Pipeline
-        public void LoadContent(ContentManager theContentManager, string theAssetName)
+        public Sprite Scl(float scale)
         {
-            mSpriteTexture = theContentManager.Load<Texture2D>(theAssetName);
-            AssetName = theAssetName;
-            Source = new Rectangle(0, 0, mSpriteTexture.Width, mSpriteTexture.Height);
-            Size = new Rectangle(0, 0, (int)(mSpriteTexture.Width * Scale), (int)(mSpriteTexture.Height * Scale));
+            this.Scale(scale);
+            return this;
         }
 
-        //Update the Sprite and change it's position based on the passed in speed, direction and elapsed time.
-        public void Update(GameTime theGameTime, Vector2 theSpeed, Vector2 theDirection)
+
+        public virtual void Draw(GameTime gameTime,SpriteBatch spriteBatch)
         {
-            Position += theDirection * theSpeed * (float)theGameTime.ElapsedGameTime.TotalSeconds;
+            spriteBatch.Draw(this.image, new Vector2(this.position.X * this.image.Width, this.position.Y * this.image.Height), null, null, new Vector2(32, 32), this.rotation, Vector2.One, Color.White, SpriteEffects.None, LayerDepth.Figures);
         }
 
-        //Draw the sprite to the screen
-        public void Draw(SpriteBatch theSpriteBatch)
+        public virtual void Draw2(GameTime gameTime,SpriteBatch spriteBatch)
         {
-            theSpriteBatch.Draw(mSpriteTexture, Position, Source,
-                Color.White, 0.0f, Vector2.Zero, Scale, SpriteEffects.None, 0);
+            spriteBatch.Draw(this.image, new Vector2(this.position.X * this.image.Width, this.position.Y * this.image.Height), null, null, null, this.rotation, Vector2.One, Color.White, SpriteEffects.None, LayerDepth.Figures);
         }
 
+        public virtual void SetRotation(float r)
+        {
+            this.rotation = r;
+        }
+
+        public virtual void Update(GameTime gameTime) { }
+
+        public virtual void Dispose()
+        {
+            this.image.Dispose();
+        }
+
+        public void SetPosition(Vector2 position)
+        {
+            this.position = position;
+        }
+        public Sprite At(Vector2 p)
+        {
+            this.SetPosition(p);
+            return this;
+        }
     }
 }

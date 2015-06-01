@@ -1,56 +1,56 @@
-﻿using System;
+﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Content;
-using Microsoft.Xna.Framework.Graphics;
 
 namespace Mess_Around_2_Roguesharp
 {
     class Bullet : Sprite
     {
-        const int MAX_DISTANCE = 2;
-
-        public bool Visible = false;
-        Vector2 mStartPosition;
-        Vector2 mSpeed;
-        Vector2 mDirection;
-
-        public void LoadContent(ContentManager cManager)
+        public float maxDistance = 2;
+        public float velocity = 4;
+        private Vector2 sourcePosition;
+        private Vector2 direction;
+        public Bullet(ContentManager cManager,
+                      Vector2 sourcePosition,
+                      float rotation)
+            : base(cManager, "bullet")
         {
-            base.LoadContent(cManager, "bala");
+            this.position = sourcePosition;
+            this.sourcePosition = sourcePosition;
+            this.rotation = rotation;
+            this.Scale(0.05f);
+            this.direction = new Vector2((float)Math.Sin(rotation),
+                                         (float)Math.Cos(rotation));
         }
 
-        public void Update(GameTime theGameTime)
+        public override void Update(GameTime gameTime)
         {
-            if (Vector2.Distance(mStartPosition, Position) > MAX_DISTANCE)
+            position = position + direction * velocity *
+                  (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+            if ((position - sourcePosition).Length() > maxDistance) 
             {
-                Visible = false;
+                this.Destroy();
             }
 
-            if (Visible == true)
-            {
-                base.Update(theGameTime, mSpeed, mDirection);
-            }
+
+            base.Update(gameTime);
         }
 
-        public virtual void Draw(SpriteBatch theSpriteBatch)
+        public override void Destroy()
         {
-            if (Visible == true)
-            {
-                base.Draw(theSpriteBatch);
-            }
+            AnimatedSprite explosion;
+            explosion = new AnimatedSprite(cManager, "explosion", 1, 12);
+            scene.AddSprite(explosion);
+            explosion.SetPosition(this.position);
+            explosion.Scale(.3f);
+            explosion.Loop = false;
+            base.Destroy();
         }
 
-        public void Fire(Vector2 theStartPosition, Vector2 theSpeed, Vector2 theDirection)
-        {
-            Position = theStartPosition;
-            mStartPosition = theStartPosition;
-            mSpeed = theSpeed;
-            mDirection = theDirection;
-            Visible = true;
-        }
 
 
     }
